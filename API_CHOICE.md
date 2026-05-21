@@ -1,61 +1,35 @@
 # API Choice
 
 - Étudiant : Josué Perrault
-- API choisie : Fruityvice
-- URL base : https://www.fruityvice.com
-- Documentation officielle / README : https://www.fruityvice.com
+- API choisie : Frankfurter
+- URL base : https://api.frankfurter.app
+- Documentation officielle / README : https://www.frankfurter.app/docs/
 - Auth : None
   - Endpoints testés :
-      - GET https://www.fruityvice.com/api/fruit/all
-      - GET https://www.fruityvice.com/api/fruit/:fruit
-      - GET https://www.fruityvice.com/api/fruit/family/:family
-      - GET https://www.fruityvice.com/api/fruit/genus/:genus
-      - GET https://www.fruityvice.com/api/fruit/order/:order
-      - GET https://www.fruityvice.com/api/fruit/:nutrition?min=0&max=1000
-      - PUT https://www.fruityvice.com/api/fruit
-        - ```json
-          {
-          "genus": "Fragaria",
-          "name": "Strawberry",
-          "family": "Rosaceae",
-          "order": "Rosales",
-          "nutritions": {
-          "carbohydrates": 5.5,
-          "protein": 0,
-          "fat": 0.4,
-          "calories": 29,
-          "sugar": 5.4
-          }
-          }
-          ```
+      - GET https://api.frankfurter.app/currencies
+      - GET https://api.frankfurter.app/latest
+      - GET https://api.frankfurter.app/latest?from=USD
+      - GET https://api.frankfurter.app/latest?amount=100&from=EUR&to=USD
+      - GET https://api.frankfurter.app/2020-01-01
+      - GET https://api.frankfurter.app/invalid_route_xyz
+      - GET https://api.frankfurter.app/latest?from=INVALID
 - Hypothèses de contrat (champs attendus, types, codes) :
 
 ```json
 {
-  "genus": "Musa",            // String
-  "name": "Banana",           // String
-  "id": 2,                    // Interger
-  "family": "Musaceae",       // String
-  "order": "Zingiberales",    // String
-  "nutritions": {             // Object
-    "carbohydrates": 22,      // Integer
-    "protein": 0,             // Integer
-    "fat": 0.2,               // Decimal
-    "calories": 96,           // Integer
-    "sugar": 17.2             // Decimal
+  "amount": 1.0,
+  "base": "EUR",
+  "date": "2026-05-20",
+  "rates": {
+    "USD": 1.0854,
+    "GBP": 0.8542
   }
 }
 ```
 
 Codes :
-```baash
-Code : 200 OK
-```
-```baash
-Code : 404 Not Found
-```
-```baash
-Code : 500 Internal server error
-```
-- Limites / rate limiting connu : Pas d'info à se sujet
-- Risques (instabilité, downtime, CORS, etc.) : Pas d'info à se sujet
+- Code : 200 OK (requête valide)
+- Code : 404 Not Found (route invalide)
+- Code : 400 Bad Request (devise invalide ou mal formatée)
+- Limites / rate limiting connu : Pas de limites strictes pour un usage raisonnable.
+- Risques (instabilité, downtime, CORS, etc.) : Très stable, hébergé de façon résiliente, sur la liste blanche officielle de PythonAnywhere.

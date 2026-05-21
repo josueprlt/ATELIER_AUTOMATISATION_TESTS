@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fruityvice — QoS & API Testing Dashboard</title>
+  <title>Frankfurter — QoS & API Testing Dashboard</title>
   <!-- Google Fonts & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -589,7 +589,7 @@
   <!-- HEADER -->
   <header>
     <div class="header-left">
-      <h1>Fruityvice API Monitor</h1>
+      <h1>Frankfurter API Monitor</h1>
       <p class="subtitle">
         <span class="pill status-online" id="global-status-pill">
           <i class="fa-solid fa-circle-check"></i> Solution Opérationnelle
@@ -665,7 +665,7 @@
         <div class="loader-overlay" id="test-loader">
           <div class="spinner"></div>
           <div class="loader-text">Exécution de la suite de tests...</div>
-          <div class="loader-step" id="loader-step-text">Appel de l'API Fruityvice & Analyse QoS</div>
+          <div class="loader-step" id="loader-step-text">Appel de l'API Frankfurter & Analyse QoS</div>
         </div>
 
         <div class="card-header">
@@ -745,7 +745,7 @@
   <footer class="footer">
     <p>
       Atelier de Tests d'API M1 — Josué Perrault. 
-      API ciblée : <b>Fruityvice</b> • Stockage : <b>Local Storage (Navigateur)</b> • QoS : <b>Mesure de Latence Moyenne et Percentile 95 (p95)</b>.
+      API ciblée : <b>Frankfurter</b> • Stockage : <b>Local Storage (Navigateur)</b> • QoS : <b>Mesure de Latence Moyenne et Percentile 95 (p95)</b>.
     </p>
     <p style="opacity: 0.6; margin-top: 8px;">
       Développé avec amour, HTML5 Sémantique, CSS Pur et Chart.js.
@@ -759,13 +759,13 @@
     
     // Charger l'historique depuis localStorage au démarrage
     function getHistory() {
-      const data = localStorage.getItem('fruityvice_runs');
+      const data = localStorage.getItem('frankfurter_runs');
       return data ? JSON.parse(data) : [];
     }
 
     // Sauvegarder l'historique
     function saveHistory(history) {
-      localStorage.setItem('fruityvice_runs', JSON.stringify(history));
+      localStorage.setItem('frankfurter_runs', JSON.stringify(history));
     }
 
     // Basculer l'affichage des détails d'un test dans le tableau principal
@@ -841,7 +841,7 @@
     // Réinitialiser l'historique dans LocalStorage
     function clearLocalStorageHistory() {
       if (confirm("Êtes-vous absolument sûr de vouloir vider l'historique complet stocké dans le localStorage de votre navigateur ?")) {
-        localStorage.removeItem('fruityvice_runs');
+        localStorage.removeItem('frankfurter_runs');
         updateUI();
       }
     }
@@ -860,7 +860,7 @@
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'fruityvice_localStorage_history.json';
+      link.download = 'frankfurter_localStorage_history.json';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -879,13 +879,13 @@
       // Simulation d'étapes pour améliorer l'expérience utilisateur
       const steps = [
         "Initialisation du client HTTP robuste...",
-        "Test 1/7 : Récupération du contrat global des fruits...",
-        "Test 2/7 : Validation du schéma de la Banana spécifique...",
-        "Test 3/7 : Vérification de la robustesse 404 (Cas invalides)...",
-        "Test 4/7 : Filtrage par famille (Rosaceae)...",
-        "Test 5/7 : Filtrage par genre (Fragaria)...",
-        "Test 6/7 : Filtrage par ordre (Rosales)...",
-        "Test 7/7 : Filtrage QoS des calories [0-100]...",
+        "Test 1/7 : Récupération globale des devises supportées...",
+        "Test 2/7 : Vérification du contrat du taux EUR de base...",
+        "Test 3/7 : Vérification du paramétrage de devise (USD)...",
+        "Test 4/7 : Validation du calcul de conversion (100 EUR -> USD)...",
+        "Test 5/7 : Contrôle de la date historique (2020-01-01)...",
+        "Test 6/7 : Vérification de la robustesse 404 (Route invalide)...",
+        "Test 7/7 : Vérification de la robustesse 400 (Paramètre invalide)...",
         "Compilation des métriques QoS..."
       ];
       

@@ -4,7 +4,7 @@ import time
 import json
 
 class APIClient:
-    def __init__(self, base_url="https://www.fruityvice.com", timeout=3.0, max_retries=1):
+    def __init__(self, base_url="https://api.frankfurter.app", timeout=3.0, max_retries=1):
         self.base_url = base_url
         self.timeout = timeout
         self.max_retries = max_retries

@@ -1,74 +1,9 @@
-def test_get_all_fruits(client):
-    """Test 1: GET /api/fruit/all - Vérifie la liste globale des fruits (contrat, types, présence)"""
-    name = "GET /api/fruit/all (Contrat global)"
-    endpoint = "GET /api/fruit/all"
+def test_get_currencies(client):
+    """Test 1: GET /currencies - Liste des devises supportées (Contrat de base)"""
+    name = "GET /currencies (Contrat global)"
+    endpoint = "GET /currencies"
     
-    res = client.request("/api/fruit/all")
-    if not res["success"]:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": res["error"] or f"Status code: {res['status_code']}"
-        }
-        
-    data = res["data"]
-    if not isinstance(data, list):
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": f"Format invalide: attendu une liste, obtenu {type(data).__name__}"
-        }
-        
-    if len(data) == 0:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "La liste des fruits est vide"
-        }
-        
-    # Vérification du schéma du premier élément
-    first = data[0]
-    required_keys = ["name", "id", "family", "genus", "order", "nutritions"]
-    for key in required_keys:
-        if key not in first:
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Clé manquante dans le contrat: '{key}'"
-            }
-            
-    # Vérification des types
-    if not isinstance(first["name"], str) or not isinstance(first["id"], int) or not isinstance(first["nutritions"], dict):
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "Types invalides pour les champs de base (name, id, ou nutritions)"
-        }
-        
-    return {
-        "name": name,
-        "endpoint": endpoint,
-        "status": "PASS",
-        "latency_ms": res["latency_ms"],
-        "details": f"Succès: {len(data)} fruits validés."
-    }
-
-def test_get_single_fruit_banana(client):
-    """Test 2: GET /api/fruit/banana - Vérifie les détails d'un fruit spécifique (Banana)"""
-    name = "GET /api/fruit/banana (Spécifique)"
-    endpoint = "GET /api/fruit/banana"
-    
-    res = client.request("/api/fruit/banana")
+    res = client.request("/currencies")
     if not res["success"]:
         return {
             "name": name,
@@ -85,38 +20,19 @@ def test_get_single_fruit_banana(client):
             "endpoint": endpoint,
             "status": "FAIL",
             "latency_ms": res["latency_ms"],
-            "details": f"Format invalide: attendu un dictionnaire, obtenu {type(data).__name__}"
+            "details": f"Format de réponse invalide: attendu un dictionnaire, obtenu {type(data).__name__}"
         }
         
-    # Vérification des valeurs de Banana
-    expectations = {
-        "name": "Banana",
-        "genus": "Musa",
-        "family": "Musaceae",
-        "order": "Zingiberales"
-    }
-    
-    for key, expected_val in expectations.items():
-        if data.get(key) != expected_val:
+    # Vérification de clés importantes
+    expected_currencies = ["USD", "EUR", "GBP", "JPY", "CAD"]
+    for cur in expected_currencies:
+        if cur not in data:
             return {
                 "name": name,
                 "endpoint": endpoint,
                 "status": "FAIL",
                 "latency_ms": res["latency_ms"],
-                "details": f"Valeur incorrecte pour '{key}': attendu '{expected_val}', obtenu '{data.get(key)}'"
-            }
-            
-    # Vérification des nutritions
-    nutritions = data.get("nutritions", {})
-    required_nutritions = ["carbohydrates", "protein", "fat", "calories", "sugar"]
-    for nut in required_nutritions:
-        if nut not in nutritions:
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Clé nutritionnelle manquante: '{nut}'"
+                "details": f"Devise majeure manquante dans la liste: '{cur}'"
             }
             
     return {
@@ -124,15 +40,211 @@ def test_get_single_fruit_banana(client):
         "endpoint": endpoint,
         "status": "PASS",
         "latency_ms": res["latency_ms"],
-        "details": "Succès: Contrat Banana 100% validé (Musa, Musaceae, Zingiberales)."
+        "details": f"Succès: {len(data)} devises supportées et validées."
     }
 
-def test_get_fruit_invalid(client):
-    """Test 3: GET /api/fruit/invalid_fruit - Vérifie le cas d'erreur 404 (cas d'entrée invalide)"""
-    name = "GET /api/fruit/invalid (Robustesse 404)"
-    endpoint = "GET /api/fruit/invalid_fruit_name_xyz"
+def test_get_latest_rates(client):
+    """Test 2: GET /latest - Taux de change actuels depuis EUR (Contrat Taux)"""
+    name = "GET /latest (Taux de base EUR)"
+    endpoint = "GET /latest"
     
-    res = client.request("/api/fruit/invalid_fruit_name_xyz")
+    res = client.request("/latest")
+    if not res["success"]:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": res["error"] or f"Status code: {res['status_code']}"
+        }
+        
+    data = res["data"]
+    if not isinstance(data, dict):
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": "Format invalide"
+        }
+        
+    # Vérification du contrat de structure
+    required_keys = ["amount", "base", "date", "rates"]
+    for key in required_keys:
+        if key not in data:
+            return {
+                "name": name,
+                "endpoint": endpoint,
+                "status": "FAIL",
+                "latency_ms": res["latency_ms"],
+                "details": f"Clé obligatoire manquante : '{key}'"
+            }
+            
+    if data["base"] != "EUR":
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": f"Base incorrecte: attendu 'EUR', obtenu '{data['base']}'"
+        }
+        
+    rates = data.get("rates", {})
+    if "USD" not in rates or not isinstance(rates["USD"], (int, float)):
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": "Taux USD absent ou au format invalide"
+        }
+        
+    return {
+        "name": name,
+        "endpoint": endpoint,
+        "status": "PASS",
+        "latency_ms": res["latency_ms"],
+        "details": f"Succès: Base EUR validée. Taux USD actuel : {rates['USD']}"
+    }
+
+def test_get_latest_from_usd(client):
+    """Test 3: GET /latest?from=USD - Taux de change depuis USD (Paramétrage)"""
+    name = "GET /latest?from=USD (Taux de change USD)"
+    endpoint = "GET /latest?from=USD"
+    
+    res = client.request("/latest?from=USD")
+    if not res["success"]:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": res["error"] or f"Status code: {res['status_code']}"
+        }
+        
+    data = res["data"]
+    if data.get("base") != "USD":
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": f"Base incorrecte: attendu 'USD', obtenu '{data.get('base')}'"
+        }
+        
+    rates = data.get("rates", {})
+    if "EUR" not in rates:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": "Taux de retour vers EUR absent de la réponse"
+        }
+        
+    return {
+        "name": name,
+        "endpoint": endpoint,
+        "status": "PASS",
+        "latency_ms": res["latency_ms"],
+        "details": f"Succès: Base USD validée. Taux EUR : {rates['EUR']}"
+    }
+
+def test_get_conversion_amount(client):
+    """Test 4: GET /latest?amount=100&from=EUR&to=USD - Conversion d'un montant (Calcul)"""
+    name = "GET /latest?amount=100 (Conversion)"
+    endpoint = "GET /latest?amount=100&from=EUR&to=USD"
+    
+    res = client.request("/latest?amount=100&from=EUR&to=USD")
+    if not res["success"]:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": res["error"] or f"Status code: {res['status_code']}"
+        }
+        
+    data = res["data"]
+    if data.get("amount") != 100:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": f"Montant incorrect: attendu 100, obtenu {data.get('amount')}"
+        }
+        
+    rates = data.get("rates", {})
+    if "USD" not in rates or rates["USD"] <= 0:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": "Conversion USD invalide ou négative"
+        }
+        
+    return {
+        "name": name,
+        "endpoint": endpoint,
+        "status": "PASS",
+        "latency_ms": res["latency_ms"],
+        "details": f"Succès: 100 EUR convertis en {rates['USD']} USD."
+    }
+
+def test_get_historical_rates(client):
+    """Test 5: GET /2020-01-01 - Taux de change historique spécifique (Historique)"""
+    name = "GET /2020-01-01 (Taux Historique)"
+    endpoint = "GET /2020-01-01"
+    
+    res = client.request("/2020-01-01")
+    if not res["success"]:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": res["error"] or f"Status code: {res['status_code']}"
+        }
+        
+    data = res["data"]
+    date_val = data.get("date", "")
+    
+    # Le 1er Janvier étant férié, l'API renvoie le jour ouvré de bourse le plus proche (ex: 2019-12-31 ou 2020-01-02)
+    if not (date_val.startswith("2020-01") or date_val.startswith("2019-12")):
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": f"Date historique incohérente : attendu début '2020-01', obtenu '{date_val}'"
+        }
+        
+    rates = data.get("rates", {})
+    if "USD" not in rates:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "FAIL",
+            "latency_ms": res["latency_ms"],
+            "details": "Taux historique USD manquant"
+        }
+        
+    return {
+        "name": name,
+        "endpoint": endpoint,
+        "status": "PASS",
+        "latency_ms": res["latency_ms"],
+        "details": f"Succès: Historique validé (Date bourse : {date_val}, USD: {rates['USD']})."
+    }
+
+def test_get_invalid_route(client):
+    """Test 6: GET /invalid_route_xyz - Vérification du comportement 404 (Entrée invalide)"""
+    name = "GET /invalid_route (Robustesse 404)"
+    endpoint = "GET /invalid_route_xyz"
+    
+    res = client.request("/invalid_route_xyz")
     status_code = res["status_code"]
     
     if status_code == 404:
@@ -141,7 +253,7 @@ def test_get_fruit_invalid(client):
             "endpoint": endpoint,
             "status": "PASS",
             "latency_ms": res["latency_ms"],
-            "details": "Succès: Le serveur renvoie bien une erreur 404 attendue pour une entrée inconnue."
+            "details": "Succès: L'API renvoie correctement un code 404 attendu pour une route inconnue."
         }
     else:
         return {
@@ -149,194 +261,42 @@ def test_get_fruit_invalid(client):
             "endpoint": endpoint,
             "status": "FAIL",
             "latency_ms": res["latency_ms"],
-            "details": f"Comportement inattendu: attendu code 404, obtenu {status_code}"
+            "details": f"Comportement inattendu: attendu statut 404, obtenu {status_code}"
         }
 
-def test_get_family_rosaceae(client):
-    """Test 4: GET /api/fruit/family/Rosaceae - Filtre par famille Rosaceae"""
-    name = "GET /api/fruit/family/Rosaceae (Filtre)"
-    endpoint = "GET /api/fruit/family/Rosaceae"
+def test_get_invalid_currency_code(client):
+    """Test 7: GET /latest?from=INVALID - Code d'erreur 400 attendu pour paramètre invalide (Robustesse 400)"""
+    name = "GET /latest?from=INVALID (Robustesse 400)"
+    endpoint = "GET /latest?from=INVALID"
     
-    res = client.request("/api/fruit/family/Rosaceae")
-    if not res["success"]:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": res["error"] or f"Status code: {res['status_code']}"
-        }
-        
-    data = res["data"]
-    if not isinstance(data, list) or len(data) == 0:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "Format invalide ou liste vide renvoyée pour la famille Rosaceae"
-        }
-        
-    # Vérifier que tous les fruits ont la famille Rosaceae
-    for fruit in data:
-        if fruit.get("family") != "Rosaceae":
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Fruit '{fruit.get('name')}' appartient à la famille '{fruit.get('family')}' au lieu de Rosaceae"
-            }
-            
-    return {
-        "name": name,
-        "endpoint": endpoint,
-        "status": "PASS",
-        "latency_ms": res["latency_ms"],
-        "details": f"Succès: {len(data)} fruits validés dans la famille Rosaceae."
-    }
-
-def test_get_genus_fragaria(client):
-    """Test 5: GET /api/fruit/genus/Fragaria - Filtre par genre Fragaria"""
-    name = "GET /api/fruit/genus/Fragaria (Filtre)"
-    endpoint = "GET /api/fruit/genus/Fragaria"
+    res = client.request("/latest?from=INVALID")
+    status_code = res["status_code"]
     
-    res = client.request("/api/fruit/genus/Fragaria")
-    if not res["success"]:
+    if status_code in [400, 404]:
+        return {
+            "name": name,
+            "endpoint": endpoint,
+            "status": "PASS",
+            "latency_ms": res["latency_ms"],
+            "details": f"Succès: L'API rejette correctement le code devise invalide (statut HTTP {status_code} obtenu)."
+        }
+    else:
         return {
             "name": name,
             "endpoint": endpoint,
             "status": "FAIL",
             "latency_ms": res["latency_ms"],
-            "details": res["error"] or f"Status code: {res['status_code']}"
+            "details": f"Comportement inattendu: attendu statut 400 ou 404, obtenu {status_code}"
         }
-        
-    data = res["data"]
-    if not isinstance(data, list) or len(data) == 0:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "Format invalide ou liste vide renvoyée pour le genre Fragaria"
-        }
-        
-    # Vérifier que tous les fruits ont le genre Fragaria
-    for fruit in data:
-        if fruit.get("genus") != "Fragaria":
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Fruit '{fruit.get('name')}' appartient au genre '{fruit.get('genus')}' au lieu de Fragaria"
-            }
-            
-    return {
-        "name": name,
-        "endpoint": endpoint,
-        "status": "PASS",
-        "latency_ms": res["latency_ms"],
-        "details": f"Succès: {len(data)} fruits validés dans le genre Fragaria."
-    }
-
-def test_get_order_rosales(client):
-    """Test 6: GET /api/fruit/order/Rosales - Filtre par ordre Rosales"""
-    name = "GET /api/fruit/order/Rosales (Filtre)"
-    endpoint = "GET /api/fruit/order/Rosales"
-    
-    res = client.request("/api/fruit/order/Rosales")
-    if not res["success"]:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": res["error"] or f"Status code: {res['status_code']}"
-        }
-        
-    data = res["data"]
-    if not isinstance(data, list) or len(data) == 0:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "Format invalide ou liste vide renvoyée pour l'ordre Rosales"
-        }
-        
-    # Vérifier que tous les fruits ont l'ordre Rosales
-    for fruit in data:
-        if fruit.get("order") != "Rosales":
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Fruit '{fruit.get('name')}' appartient à l'ordre '{fruit.get('order')}' au lieu de Rosales"
-            }
-            
-    return {
-        "name": name,
-        "endpoint": endpoint,
-        "status": "PASS",
-        "latency_ms": res["latency_ms"],
-        "details": f"Succès: {len(data)} fruits validés dans l'ordre Rosales."
-    }
-
-def test_get_nutrition_calories(client):
-    """Test 7: GET /api/fruit/calories?min=0&max=100 - Filtre par valeur nutritionnelle (calories)"""
-    name = "GET /api/fruit/calories (QoS & Filtre)"
-    endpoint = "GET /api/fruit/calories?min=0&max=100"
-    
-    res = client.request("/api/fruit/calories?min=0&max=100")
-    if not res["success"]:
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": res["error"] or f"Status code: {res['status_code']}"
-        }
-        
-    data = res["data"]
-    if not isinstance(data, list):
-        return {
-            "name": name,
-            "endpoint": endpoint,
-            "status": "FAIL",
-            "latency_ms": res["latency_ms"],
-            "details": "Format invalide renvoyé pour le filtre de calories (attendu une liste)"
-        }
-        
-    # Vérifier que tous les fruits ont des calories entre 0 et 100
-    for fruit in data:
-        cals = fruit.get("nutritions", {}).get("calories")
-        if cals is None or not (0 <= cals <= 100):
-            return {
-                "name": name,
-                "endpoint": endpoint,
-                "status": "FAIL",
-                "latency_ms": res["latency_ms"],
-                "details": f"Fruit '{fruit.get('name')}' a {cals} calories, hors intervalle [0, 100]"
-            }
-            
-    return {
-        "name": name,
-        "endpoint": endpoint,
-        "status": "PASS",
-        "latency_ms": res["latency_ms"],
-        "details": f"Succès: {len(data)} fruits dans la plage de calories [0-100]."
-    }
 
 def get_all_tests():
     """Retourne la liste des fonctions de test à exécuter."""
     return [
-        test_get_all_fruits,
-        test_get_single_fruit_banana,
-        test_get_fruit_invalid,
-        test_get_family_rosaceae,
-        test_get_genus_fragaria,
-        test_get_order_rosales,
-        test_get_nutrition_calories
+        test_get_currencies,
+        test_get_latest_rates,
+        test_get_latest_from_usd,
+        test_get_conversion_amount,
+        test_get_historical_rates,
+        test_get_invalid_route,
+        test_get_invalid_currency_code
     ]

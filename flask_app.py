@@ -24,32 +24,32 @@ def trigger_run():
 def health():
     """
     Endpoint de santé (/health) pour évaluer l'état
-    de l'application Flask et de l'API Fruityvice externe.
+    de l'application Flask et de l'API Frankfurter externe.
     """
     health_status = {
         "status": "OK",
         "timestamp": datetime.datetime.now().isoformat(),
-        "fruityvice_api": {
+        "frankfurter_api": {
             "status": "UNKNOWN",
             "latency_ms": 0.0,
             "error": None
         }
     }
     
-    # Vérification de l'API Fruityvice externe
-    client = APIClient(base_url="https://www.fruityvice.com", timeout=3.0, max_retries=0)
-    res = client.request("/api/fruit/banana")
+    # Vérification de l'API Frankfurter externe
+    client = APIClient(base_url="https://api.frankfurter.app", timeout=3.0, max_retries=0)
+    res = client.request("/latest")
     
     if res["success"]:
-        health_status["fruityvice_api"]["status"] = "OK"
-        health_status["fruityvice_api"]["latency_ms"] = round(res["latency_ms"], 1)
+        health_status["frankfurter_api"]["status"] = "OK"
+        health_status["frankfurter_api"]["latency_ms"] = round(res["latency_ms"], 1)
     else:
         health_status["status"] = "DEGRADED"
-        health_status["fruityvice_api"]["status"] = "DOWN/UNREACHABLE"
-        health_status["fruityvice_api"]["error"] = res["error"]
+        health_status["frankfurter_api"]["status"] = "DOWN/UNREACHABLE"
+        health_status["frankfurter_api"]["error"] = res["error"]
         
     return jsonify(health_status)
 
 if __name__ == "__main__":
     # utile en local uniquement
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

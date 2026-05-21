@@ -18,7 +18,7 @@ def run_all_tests():
     Exécute tous les tests définis, compile les statistiques QoS,
     et renvoie le rapport complet du run.
     """
-    client = APIClient(base_url="https://www.fruityvice.com", timeout=4.0, max_retries=1)
+    client = APIClient(base_url="https://api.frankfurter.app", timeout=4.0, max_retries=1)
     tests = get_all_tests()
     
     timestamp = datetime.datetime.now().isoformat()
