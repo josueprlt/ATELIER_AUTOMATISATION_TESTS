@@ -595,7 +595,7 @@
           <i class="fa-solid fa-circle-check"></i> Solution Opérationnelle
         </span>
         <span>•</span>
-        <span id="header-time-sync"><i class="fa-solid fa-clock"></i> Analyse en temps réel</span>
+        <span id="header-time-sync"><i class="fa-solid fa-clock"></i> Analyse client localStorage</span>
       </p>
     </div>
     
@@ -603,9 +603,9 @@
       <a href="/health" target="_blank" class="btn btn-secondary small">
         <i class="fa-solid fa-heartbeat"></i> Health API
       </a>
-      <a href="/api/export" class="btn btn-secondary small">
+      <button class="btn btn-secondary small" onclick="exportHistoryJSON()">
         <i class="fa-solid fa-download"></i> Exporter Historique
-      </a>
+      </button>
       <button class="btn btn-primary" id="btn-trigger-tests" onclick="triggerTestRun()">
         <i class="fa-solid fa-play"></i> Lancer les tests
       </button>
@@ -616,39 +616,23 @@
     <!-- KPIS CARD GRID -->
     <div class="kpi-grid">
       <!-- Disponibilité (QoS) -->
-      <div class="kpi-card {% if latest_run %}{% if latest_run.success_rate >= 100 %}kpi-ok{% elif latest_run.success_rate >= 70 %}kpi-warn{% else %}kpi-bad{% endif %}{% endif %}" id="kpi-avail-card">
+      <div class="kpi-card" id="kpi-avail-card">
         <div class="kpi-card-header">
           <span>Disponibilité (Dernier Run)</span>
           <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <div class="kpi-val" id="kpi-avail-val">
-          {% if latest_run %}{{ latest_run.success_rate }}%{% else %}N/A{% endif %}
-        </div>
-        <div class="kpi-desc" id="kpi-avail-desc">
-          {% if latest_run %}
-            {{ latest_run.passed_count }} tests passés sur 7
-          {% else %}
-            Aucun run de test stocké
-          {% endif %}
-        </div>
+        <div class="kpi-val" id="kpi-avail-val">N/A</div>
+        <div class="kpi-desc" id="kpi-avail-desc">Aucun run de test stocké</div>
       </div>
 
       <!-- Latence Moyenne (QoS) -->
       <div class="kpi-card" id="kpi-latency-card">
         <div class="kpi-card-header">
-          <span>Latence Moyenne</span>
+          <span>Latence Moyenne (Dernier Run)</span>
           <i class="fa-solid fa-gauge-high"></i>
         </div>
-        <div class="kpi-val" id="kpi-latency-val">
-          {% if latest_run %}{{ latest_run.latency_avg }} <span style="font-size: 16px;">ms</span>{% else %}N/A{% endif %}
-        </div>
-        <div class="kpi-desc" id="kpi-latency-desc">
-          {% if latest_run %}
-            Percentile 95 (p95) : <b>{{ latest_run.latency_p95 }} ms</b>
-          {% else %}
-            Aucun run de test stocké
-          {% endif %}
-        </div>
+        <div class="kpi-val" id="kpi-latency-val">N/A</div>
+        <div class="kpi-desc" id="kpi-latency-desc">Aucun run de test stocké</div>
       </div>
 
       <!-- Taux d'Erreur Historique -->
@@ -657,12 +641,8 @@
           <span>Taux de Succès Moyen (Global)</span>
           <i class="fa-solid fa-chart-pie"></i>
         </div>
-        <div class="kpi-val" id="kpi-error-val">
-          {% if total_runs %}{{ avg_success_rate_global }}%{% else %}N/A{% endif %}
-        </div>
-        <div class="kpi-desc" id="kpi-error-desc">
-          Moyenne calculée sur <b>{{ total_runs }}</b> runs historisés
-        </div>
+        <div class="kpi-val" id="kpi-error-val">N/A</div>
+        <div class="kpi-desc" id="kpi-error-desc">Moyenne calculée sur 0 run</div>
       </div>
 
       <!-- Latence Globale Moyenne -->
@@ -671,12 +651,8 @@
           <span>Latence Historique Moyenne</span>
           <i class="fa-solid fa-clock-rotate-left"></i>
         </div>
-        <div class="kpi-val" id="kpi-runs-val">
-          {% if total_runs %}{{ avg_latency_global }} <span style="font-size:16px;">ms</span>{% else %}N/A{% endif %}
-        </div>
-        <div class="kpi-desc">
-          Réactivité moyenne de l'API Fruityvice
-        </div>
+        <div class="kpi-val" id="kpi-runs-val">N/A</div>
+        <div class="kpi-desc">Réactivité moyenne cumulée</div>
       </div>
     </div>
 
@@ -694,65 +670,11 @@
 
         <div class="card-header">
           <h2><i class="fa-solid fa-square-poll-vertical"></i> Résultats détaillés du dernier run</h2>
-          <span class="pill" id="latest-run-timestamp">
-            {% if latest_run %}
-              Run effectué le {{ latest_run.timestamp[:19].replace('T', ' à ') }}
-            {% else %}
-              Aucune exécution
-            {% endif %}
-          </span>
+          <span class="pill" id="latest-run-timestamp">Aucune exécution</span>
         </div>
 
         <div class="table-container" id="latest-run-table-container">
-          {% if latest_run %}
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 40px;"></th>
-                  <th>Nom du Test</th>
-                  <th>Endpoint</th>
-                  <th>Statut</th>
-                  <th style="text-align: right;">Latence</th>
-                </tr>
-              </thead>
-              <tbody id="latest-run-results-tbody">
-                {% for test in latest_run.details %}
-                  <tr class="test-row {% if test.status == 'FAIL' %}expanded{% endif %}" onclick="toggleRow(this)">
-                    <td style="text-align: center;">
-                      <i class="fa-solid fa-chevron-right chevron-icon"></i>
-                    </td>
-                    <td><b>{{ test.name }}</b></td>
-                    <td><code>{{ test.endpoint }}</code></td>
-                    <td>
-                      <span class="badge {% if test.status == 'PASS' %}badge-pass{% else %}badge-fail{% endif %}">
-                        {{ test.status }}
-                      </span>
-                    </td>
-                    <td style="text-align: right; font-weight: 600;">
-                      {{ test.latency_ms | round(1) }} ms
-                    </td>
-                  </tr>
-                  <tr class="test-details-container" style="{% if test.status == 'FAIL' %}display: table-row;{% endif %}">
-                    <td colspan="5">
-                      <div class="test-details-content">
-                        {% if test.status == 'PASS' %}
-                          [OK] Contrat et QoS validés avec succès. Détails : {{ test.details }}
-                        {% else %}
-                          [DÉFAILLANCE] Assertion échouée. Raison :
-{{ test.details }}
-                        {% endif %}
-                      </div>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <div class="empty-state" id="empty-results-view">
-              <i class="fa-solid fa-vial-circle-check"></i>
-              <p>Aucune donnée disponible. Cliquez sur "Lancer les tests" ci-dessus pour démarrer l'automatisation.</p>
-            </div>
-          {% endif %}
+          <!-- Rempli dynamiquement en JS -->
         </div>
       </section>
 
@@ -766,7 +688,7 @@
           </div>
           <div class="chart-box">
             <canvas id="qosChart" style="max-height: 250px;"></canvas>
-            <div class="empty-state" id="empty-chart-view" style="display: none; position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); width: 100%">
+            <div class="empty-state" id="empty-chart-view" style="display: flex; position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); width: 100%">
               <i class="fa-solid fa-chart-bar" style="font-size:24px;"></i>
               <p style="font-size:12px; margin-top:8px;">Aucune tendance disponible</p>
             </div>
@@ -777,40 +699,13 @@
         <section class="card">
           <div class="card-header" style="margin-bottom: 16px;">
             <h2><i class="fa-solid fa-history"></i> Historique des runs</h2>
-            <form action="/api/clear" method="POST" id="form-clear-db" style="display: inline;" onsubmit="return confirmClear()">
-              <button type="submit" class="btn btn-danger small" style="padding: 4px 10px; font-size:11px;">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </form>
+            <button class="btn btn-danger small" style="padding: 4px 10px; font-size:11px;" onclick="clearLocalStorageHistory()">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
 
           <div style="max-height: 350px; overflow-y: auto; padding-right: 4px;" id="history-runs-list">
-            {% if runs %}
-              {% for r in runs %}
-                <div class="history-item" onclick="showRunDetails({{ r | tojson | forceescape }})">
-                  <div class="history-item-left">
-                    <span style="font-weight:600; font-size:13px; color:var(--text-white);">
-                      Run #{{ r.id }} — {% if r.success_rate >= 100 %}<span style="color:var(--ok)">100% OK</span>{% else %}<span style="color:var(--bad)">{{ r.success_rate }}%</span>{% endif %}
-                    </span>
-                    <span class="history-time">
-                      {{ r.timestamp[11:19] }} ({{ r.timestamp[:10] }})
-                    </span>
-                  </div>
-                  <div class="history-item-right">
-                    <div style="text-align: right;">
-                      <div style="font-size:12px; font-weight:600;">Avg: {{ r.latency_avg }}ms</div>
-                      <div style="font-size:10px; color:var(--muted)">p95: {{ r.latency_p95 }}ms</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right" style="font-size:10px; color:var(--muted)"></i>
-                  </div>
-                </div>
-              {% endfor %}
-            {% else %}
-              <div class="empty-state" id="empty-history-view">
-                <i class="fa-solid fa-folder-open"></i>
-                <p>Aucun historique de test.</p>
-              </div>
-            {% endif %}
+            <!-- Rempli dynamiquement en JS -->
           </div>
         </section>
 
@@ -850,7 +745,7 @@
   <footer class="footer">
     <p>
       Atelier de Tests d'API M1 — Josué Perrault. 
-      API ciblée : <b>Fruityvice</b> • Base de données : <b>SQLite (Local)</b> • QoS : <b>Mesure de Latence Moyenne et Percentile 95 (p95)</b>.
+      API ciblée : <b>Fruityvice</b> • Stockage : <b>Local Storage (Navigateur)</b> • QoS : <b>Mesure de Latence Moyenne et Percentile 95 (p95)</b>.
     </p>
     <p style="opacity: 0.6; margin-top: 8px;">
       Développé avec amour, HTML5 Sémantique, CSS Pur et Chart.js.
@@ -862,6 +757,17 @@
     // Variables globales
     let qosChart = null;
     
+    // Charger l'historique depuis localStorage au démarrage
+    function getHistory() {
+      const data = localStorage.getItem('fruityvice_runs');
+      return data ? JSON.parse(data) : [];
+    }
+
+    // Sauvegarder l'historique
+    function saveHistory(history) {
+      localStorage.setItem('fruityvice_runs', JSON.stringify(history));
+    }
+
     // Basculer l'affichage des détails d'un test dans le tableau principal
     function toggleRow(row) {
       row.classList.toggle('expanded');
@@ -888,8 +794,8 @@
         </div>
         <div style="padding: 10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05)">
           <div style="font-size:11px; color:var(--muted)">TEMPS DE RÉPONSE API</div>
-          <div style="font-size:18px; font-weight:700; color:var(--accent)">${run.latency_avg} <span style="font-size:12px">ms (avg)</span></div>
-          <div style="font-size:11px; color:var(--muted)">Percentile 95 (p95) : ${run.latency_p95} ms</div>
+          <div style="font-size:18px; font-weight:700; color:var(--accent)">${run.latency_avg.toFixed(1)} <span style="font-size:12px">ms (avg)</span></div>
+          <div style="font-size:11px; color:var(--muted)">Percentile 95 (p95) : ${run.latency_p95.toFixed(1)} ms</div>
         </div>
       `;
       
@@ -932,9 +838,33 @@
       }
     }
 
-    // Confirmation de réinitialisation
-    function confirmClear() {
-      return confirm("Êtes-vous absolument sûr de vouloir vider l'historique complet de la base de données SQLite ?");
+    // Réinitialiser l'historique dans LocalStorage
+    function clearLocalStorageHistory() {
+      if (confirm("Êtes-vous absolument sûr de vouloir vider l'historique complet stocké dans le localStorage de votre navigateur ?")) {
+        localStorage.removeItem('fruityvice_runs');
+        updateUI();
+      }
+    }
+
+    // Exporter au format JSON
+    function exportHistoryJSON() {
+      const history = getHistory();
+      if (history.length === 0) {
+        alert("Aucun historique à exporter !");
+        return;
+      }
+      
+      const jsonString = JSON.stringify(history, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'fruityvice_localStorage_history.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     // Lancer AJAX Run
@@ -956,7 +886,7 @@
         "Test 5/7 : Filtrage par genre (Fragaria)...",
         "Test 6/7 : Filtrage par ordre (Rosales)...",
         "Test 7/7 : Filtrage QoS des calories [0-100]...",
-        "Compilation des métriques QoS & Enregistrement SQLite..."
+        "Compilation des métriques QoS..."
       ];
       
       let stepIndex = 0;
@@ -965,10 +895,10 @@
           document.getElementById('loader-step-text').innerText = steps[stepIndex];
           stepIndex++;
         }
-      }, 400);
+      }, 350);
 
       // Appel de l'API Flask
-      fetch('/run?ajax=1')
+      fetch('/run')
         .then(response => {
           if (!response.ok) {
             throw new Error("Erreur HTTP lors de l'exécution des tests.");
@@ -977,8 +907,31 @@
         })
         .then(report => {
           clearInterval(stepInterval);
-          // Actualiser la page après un léger délai pour que le nouvel état SQLite soit affiché
-          window.location.reload();
+          
+          // Ajouter le nouveau run à l'historique
+          const history = getHistory();
+          const nextId = history.length > 0 ? Math.max(...history.map(r => r.id)) + 1 : 1;
+          
+          const newRun = {
+            id: nextId,
+            timestamp: report.timestamp,
+            passed_count: report.passed_count,
+            failed_count: report.failed_count,
+            success_rate: report.success_rate,
+            latency_avg: report.latency_avg,
+            latency_p95: report.latency_p95,
+            details: report.tests
+          };
+          
+          history.unshift(newRun);
+          saveHistory(history);
+          
+          // Mettre à jour l'interface
+          updateUI();
+          
+          // Masquer le loader
+          loader.style.display = 'none';
+          btn.disabled = false;
         })
         .catch(err => {
           clearInterval(stepInterval);
@@ -993,11 +946,20 @@
       const ctx = document.getElementById('qosChart');
       if (!ctx) return;
       
+      // Détruire le graphique existant pour éviter les conflits
+      if (qosChart) {
+        qosChart.destroy();
+        qosChart = null;
+      }
+
       if (!runsData || runsData.length === 0) {
         document.getElementById('empty-chart-view').style.display = 'flex';
         ctx.style.display = 'none';
         return;
       }
+
+      document.getElementById('empty-chart-view').style.display = 'none';
+      ctx.style.display = 'block';
 
       // Inverser l'historique pour afficher chronologiquement (de gauche à droite)
       const dataToShow = [...runsData].reverse().slice(-10); // 10 derniers runs max
@@ -1087,18 +1049,179 @@
       });
     }
 
+    // Met à jour toute l'interface à partir des données de localStorage
+    function updateUI() {
+      const history = getHistory();
+      
+      // Mettre à jour le graphique
+      initChart(history);
+      
+      // Mettre à jour l'historique dans la colonne de droite
+      const historyContainer = document.getElementById('history-runs-list');
+      if (history.length === 0) {
+        historyContainer.innerHTML = `
+          <div class="empty-state" id="empty-history-view">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>Aucun historique de test.</p>
+          </div>
+        `;
+      } else {
+        historyContainer.innerHTML = '';
+        history.forEach(r => {
+          const isOk = r.success_rate >= 100;
+          const successColor = isOk ? 'var(--ok)' : 'var(--bad)';
+          const labelText = isOk ? '100% OK' : `${r.success_rate}%`;
+          const timeFormatted = r.timestamp.substring(11, 19);
+          const dateFormatted = r.timestamp.substring(0, 10);
+          
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          item.setAttribute('onclick', `showRunDetails(${JSON.stringify(r)})`);
+          item.innerHTML = `
+            <div class="history-item-left">
+              <span style="font-weight:600; font-size:13px; color:var(--text-white);">
+                Run #${r.id} — <span style="color:${successColor}">${labelText}</span>
+              </span>
+              <span class="history-time">
+                ${timeFormatted} (${dateFormatted})
+              </span>
+            </div>
+            <div class="history-item-right">
+              <div style="text-align: right;">
+                <div style="font-size:12px; font-weight:600;">Avg: ${r.latency_avg.toFixed(1)}ms</div>
+                <div style="font-size:10px; color:var(--muted)">p95: ${r.latency_p95.toFixed(1)}ms</div>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:10px; color:var(--muted)"></i>
+            </div>
+          `;
+          historyContainer.appendChild(item);
+        });
+      }
+
+      // Mettre à jour les KPIs et la table des résultats du dernier run
+      const latestRunTimestamp = document.getElementById('latest-run-timestamp');
+      const tableContainer = document.getElementById('latest-run-table-container');
+      
+      const kpiAvailVal = document.getElementById('kpi-avail-val');
+      const kpiAvailDesc = document.getElementById('kpi-avail-desc');
+      const kpiAvailCard = document.getElementById('kpi-avail-card');
+      
+      const kpiLatencyVal = document.getElementById('kpi-latency-val');
+      const kpiLatencyDesc = document.getElementById('kpi-latency-desc');
+      
+      const kpiErrorVal = document.getElementById('kpi-error-val');
+      const kpiErrorDesc = document.getElementById('kpi-error-desc');
+      
+      const kpiRunsVal = document.getElementById('kpi-runs-val');
+
+      if (history.length === 0) {
+        // Mode Vide (Aucun run)
+        latestRunTimestamp.innerText = "Aucune exécution";
+        tableContainer.innerHTML = `
+          <div class="empty-state" id="empty-results-view">
+            <i class="fa-solid fa-vial-circle-check"></i>
+            <p>Aucune donnée disponible. Cliquez sur "Lancer les tests" ci-dessus pour démarrer l'automatisation.</p>
+          </div>
+        `;
+        
+        kpiAvailVal.innerText = "N/A";
+        kpiAvailDesc.innerText = "Aucun run de test stocké";
+        kpiAvailCard.className = "kpi-card";
+        
+        kpiLatencyVal.innerText = "N/A";
+        kpiLatencyDesc.innerText = "Aucun run de test stocké";
+        
+        kpiErrorVal.innerText = "N/A";
+        kpiErrorDesc.innerText = "Moyenne calculée sur 0 run";
+        
+        kpiRunsVal.innerText = "N/A";
+      } else {
+        // Mode Rempli (Au moins 1 run)
+        const latest = history[0];
+        
+        // Mettre à jour l'en-tête du dernier run
+        const dateFormatted = latest.timestamp.substring(0, 10);
+        const timeFormatted = latest.timestamp.substring(11, 19);
+        latestRunTimestamp.innerText = `Run effectué le ${dateFormatted} à ${timeFormatted}`;
+        
+        // Formater le tableau détaillé du dernier run
+        let tableHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;"></th>
+                <th>Nom du Test</th>
+                <th>Endpoint</th>
+                <th>Statut</th>
+                <th style="text-align: right;">Latence</th>
+              </tr>
+            </thead>
+            <tbody id="latest-run-results-tbody">
+        `;
+        
+        latest.details.forEach(t => {
+          const badgeClass = t.status === 'PASS' ? 'badge-pass' : 'badge-fail';
+          const isFailed = t.status === 'FAIL';
+          
+          tableHTML += `
+            <tr class="test-row ${isFailed ? 'expanded' : ''}" onclick="toggleRow(this)">
+              <td style="text-align: center;">
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+              </td>
+              <td><b>${t.name}</b></td>
+              <td><code>${t.endpoint}</code></td>
+              <td>
+                <span class="badge ${badgeClass}">
+                  ${t.status}
+                </span>
+              </td>
+              <td style="text-align: right; font-weight: 600;">
+                ${t.latency_ms.toFixed(1)} ms
+              </td>
+            </tr>
+            <tr class="test-details-container" style="${isFailed ? 'display: table-row;' : ''}">
+              <td colspan="5">
+                <div class="test-details-content">
+                  ${t.status === 'PASS' 
+                    ? `[OK] Contrat et QoS validés avec succès. Détails : ${t.details}` 
+                    : `[DÉFAILLANCE] Assertion échouée. Raison :\n${t.details}`
+                  }
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        
+        tableHTML += `
+            </tbody>
+          </table>
+        `;
+        tableContainer.innerHTML = tableHTML;
+        
+        // KPI 1: Disponibilité du dernier run
+        kpiAvailVal.innerText = `${latest.success_rate.toFixed(1)}%`;
+        kpiAvailDesc.innerText = `${latest.passed_count} tests passés sur ${latest.passed_count + latest.failed_count}`;
+        kpiAvailCard.className = `kpi-card ${latest.success_rate >= 100 ? 'kpi-ok' : (latest.success_rate >= 70 ? 'kpi-warn' : 'kpi-bad')}`;
+        
+        // KPI 2: Latence du dernier run
+        kpiLatencyVal.innerHTML = `${latest.latency_avg.toFixed(1)} <span style="font-size: 16px;">ms</span>`;
+        kpiLatencyDesc.innerHTML = `Percentile 95 (p95) : <b>${latest.latency_p95.toFixed(1)} ms</b>`;
+        
+        // KPI 3: Taux de succès historique global
+        const avgSuccess = history.reduce((sum, r) => sum + r.success_rate, 0) / history.length;
+        kpiErrorVal.innerText = `${avgSuccess.toFixed(1)}%`;
+        kpiErrorDesc.innerHTML = `Moyenne calculée sur <b>${history.length}</b> runs`;
+        
+        // KPI 4: Latence moyenne historique globale
+        const avgLatency = history.reduce((sum, r) => sum + r.latency_avg, 0) / history.length;
+        kpiRunsVal.innerHTML = `${avgLatency.toFixed(1)} <span style="font-size: 16px;">ms</span>`;
+      }
+    }
+
     // Au chargement complet de la page
     window.addEventListener('DOMContentLoaded', () => {
-      // Récupérer les données brutes d'historique fournies par Jinja ou via fetch
-      // Pour éviter de doubler les appels, on fetch les données en local pour le chart
-      fetch('/api/history')
-        .then(response => response.json())
-        .then(data => {
-          initChart(data);
-        })
-        .catch(err => {
-          console.error("Erreur lors de l'initialisation du graphique:", err);
-        });
+      // Charger et afficher les données stockées
+      updateUI();
 
       // Mettre à jour périodiquement le statut de connexion via l'API health
       function updateHealthStatus() {
