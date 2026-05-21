@@ -11,3 +11,6 @@
 - Hypothèses de contrat (champs attendus, types, codes) :
 - Limites / rate limiting connu :
 - Risques (instabilité, downtime, CORS, etc.) :
+
+
+Petite modif du readme
